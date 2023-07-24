@@ -1,7 +1,7 @@
 import {Command, command, metadata} from 'clime';
 import {format, Logger, transports} from "winston";
 import axios from "axios";
-import {Component} from "@/lib/Component";
+import {Component} from "../lib/Component";
 
 const winston = require('winston');
 require('dotenv').config()
