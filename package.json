@@ -1,0 +1,28 @@
+{
+  "name": "custom-cleanup",
+  "version": "1.0.0",
+  "description": "Custom cleanup for Sonatype Nexus Artifacts system",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc -p .",
+    "start": "node dist/main.js cleanup"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dodevops/nexus-custom-cleanup"
+  },
+  "author": "timdeluxe",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^20.4.2",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "axios": "^1.4.0",
+    "clime": "^0.5.14",
+    "dotenv": "^16.3.1",
+    "loglevel": "^1.8.1",
+    "loglevel-format": "^1.1.2",
+    "winston": "^3.10.0"
+  }
+}
