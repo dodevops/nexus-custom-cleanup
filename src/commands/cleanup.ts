@@ -212,7 +212,7 @@ export default class extends Command {
         const paths: Array<string> = []
         for (let item of output) {
             // skip if first asset has no path
-            if(item.assets[0].hasOwnProperty('path')) {
+            if(item.assets.length > 0 && item.assets[0].path) {
                 let trimmedPath: string = item.assets[0].path.split("/").slice(0, pathDepth).join("/")
                 components.push(new Component()
                     .withDate(item.assets[0].lastModified)
