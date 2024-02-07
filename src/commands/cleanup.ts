@@ -189,7 +189,10 @@ export default class extends Command {
                         }
                     }
                 )
-                output.push(...response.data.items)
+                // do not push empty items
+                if(Object.keys(response.data.items).length > 0) {
+                    output.push(...response.data.items)
+                }
                 this.logger.debug(`page ${i} and token = +++${response.data.continuationToken}+++`)
                 if (response.data.continuationToken != null) {
                     continuationToken = response.data.continuationToken
@@ -208,17 +211,20 @@ export default class extends Command {
         const components: Array<Component> = []
         const paths: Array<string> = []
         for (let item of output) {
-            let trimmedPath : string = item.assets[0].path.split("/").slice(0, pathDepth).join("/")
-            components.push(new Component()
-                .withDate(item.assets[0].lastModified)
-                .withId(item.id)
-                .withVersion(item.version)
-                .withPath(trimmedPath)
-            )
-            if (!paths.includes(trimmedPath)) {
-                paths.push(trimmedPath)
+            // skip if first asset has no path
+            if(item.assets.length > 0 && item.assets[0].path) {
+                let trimmedPath: string = item.assets[0].path.split("/").slice(0, pathDepth).join("/")
+                components.push(new Component()
+                    .withDate(item.assets[0].lastModified)
+                    .withId(item.id)
+                    .withVersion(item.version)
+                    .withPath(trimmedPath)
+                )
+                if (!paths.includes(trimmedPath)) {
+                    paths.push(trimmedPath)
+                }
+                this.logger.debug(JSON.stringify(item.version))
             }
-            this.logger.debug(JSON.stringify(item.version))
         }
 
         /**
