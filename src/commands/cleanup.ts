@@ -190,7 +190,7 @@ export default class extends Command {
                     }
                 )
                 // do not push empty items
-                if(Object.keys(response.data.items).length) {
+                if(Object.keys(response.data.items).length > 0) {
                     output.push(...response.data.items)
                 }
                 this.logger.debug(`page ${i} and token = +++${response.data.continuationToken}+++`)
