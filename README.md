@@ -16,17 +16,17 @@ The docker based used is recommended, but if required it can also be used as a n
 
 These are the variables to configure the application with:
 
-| Variable       | description                                                                 | Required | Default value |
-|----------------|-----------------------------------------------------------------------------|----------|---------------|
-| NEXUS_URL      | Nexus base URL without trailing slash                                       | yes      |               |
-| NEXUS_USERNAME | Nexus user (needs permissions to read and delete components for given repo) | yes      |               |
-| NEXUS_PASSWORD | Password for that Nexus User                                                | yes      |               |
-| REPO_NAME      | Name of the repo to cleanup components for                                  | yes      |               |
-| KEEP_ITEMS     | Keep this amount of items for given path depth                              | yes      |               |
-| PATH_DEPTH     | Path depth to do cleanup for                                                | yes      |               |
-| EXECUTE_DELETE | If false, only print components to delete, instead of really deleting them  | no       | "false"       |
-| LOG_LEVEL      | Log level for logging                                                       | no       | "info"        |
-
+| Variable             | description                                                                 | Required | Default value |
+|----------------------|-----------------------------------------------------------------------------|----------|---------------|
+| NEXUS_URL            | Nexus base URL without trailing slash                                       | yes      |               |
+| NEXUS_USERNAME       | Nexus user (needs permissions to read and delete components for given repo) | yes      |               |
+| NEXUS_PASSWORD       | Password for that Nexus User                                                | yes      |               |
+| REPO_NAME            | Name of the repo to cleanup components for                                  | yes      |               |
+| KEEP_ITEMS           | Keep this amount of items for given path depth                              | yes      |               |
+| PATH_DEPTH           | Path depth to do cleanup for                                                | yes      |               |
+| EXECUTE_DELETE       | If false, only print components to delete, instead of really deleting them  | no       | "false"       |
+| LOG_LEVEL            | Log level for logging                                                       | no       | "info"        |
+| KEEP_COMPONENT_PATHS | comma separated list of component paths to keep instead of deleting         | no       | []            |
 
 ### Docker
 

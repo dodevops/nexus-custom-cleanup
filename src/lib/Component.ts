@@ -22,6 +22,8 @@ export class Component {
      */
     public timestamp: Date = new Date()
 
+    public assetIDs: string[] = []
+
     /**
      * Sets the value for date
      *
@@ -63,6 +65,17 @@ export class Component {
      */
     public withVersion(value: string) {
         this.version = value
+        return this
+    }
+
+    /**
+     * Set the value for assetIDs
+     *
+     * @param value The list of asset IDs for the component
+     * @returns the instance itself
+     */
+    public withAssetIDs(value: string[]) {
+        this.assetIDs = value
         return this
     }
 }
