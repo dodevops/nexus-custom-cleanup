@@ -2,6 +2,7 @@ import {Command, command, metadata} from 'clime';
 import {format, Logger, transports} from "winston";
 import axios from "axios";
 import {Component} from "../lib/Component";
+import * as process from 'node:process'
 
 const winston = require('winston');
 require('dotenv').config()
@@ -52,14 +53,15 @@ export default class extends Command {
     public usage() {
         console.log(
             'Place a .env file in same directory as main.js or set environment variables with same name to set these variables:\n\
-            NEXUS_URL        - Nexus base URL without trailing slash\n\
-            NEXUS_USERNAME   - Nexus user\n\
-            NEXUS_PASSWORD   - Password for that Nexus User\n\
-            REPO_NAME        - Name of the repo to cleanup components for\n\
-            KEEP_ITEMS       - Keep this amount of items for given path depth\n\
-            PATH_DEPTH       - Path depth to do cleanup for\n\
-            EXECUTE_DELETE   - (Optional) If false, only print components to delete, instead of really deleting them (default = false)\n\
-            LOG_LEVEL        - (Optional)Log level for logging (default = info)\n'
+            NEXUS_URL            - Nexus base URL without trailing slash\n\
+            NEXUS_USERNAME       - Nexus user\n\
+            NEXUS_PASSWORD       - Password for that Nexus User\n\
+            REPO_NAME            - Name of the repo to cleanup components for\n\
+            KEEP_ITEMS           - Keep this amount of items for given path depth\n\
+            PATH_DEPTH           - Path depth to do cleanup for\n\
+            EXECUTE_DELETE       - (Optional) If false, only print components to delete, instead of really deleting them (default = false)\n\
+            LOG_LEVEL            - (Optional)Log level for logging (default = info)\n\
+            KEEP_COMPONENT_PATHS - (Optional) comma separated list of component paths to keep instead of deleting\n'
         )
     }
 
@@ -102,6 +104,9 @@ export default class extends Command {
          * If false, only print components to delete, instead of really deleting them
          */
         let executeDelete: boolean = false
+
+        // A list of component paths to keep
+        let keepComponentPaths: string[] = []
 
         /**
          * Log level for logging
@@ -157,6 +162,9 @@ export default class extends Command {
         }
         if (process.env.EXECUTE_DELETE) {
             executeDelete = (process.env.EXECUTE_DELETE === 'true')
+        }
+        if (process.env.KEEP_COMPONENT_PATHS) {
+            keepComponentPaths = process.env.KEEP_COMPONENT_PATHS.split(/,/)
         }
 
         /**
@@ -214,11 +222,19 @@ export default class extends Command {
             // skip if first asset has no path
             if(item.assets.length > 0 && item.assets[0].path) {
                 let trimmedPath: string = item.assets[0].path.split("/").slice(0, pathDepth).join("/")
+                const assetIDs = item.assets.reduce(
+                  (accumulator: string[], currentValue: any) : string[] => {
+                      accumulator.push(currentValue.id)
+                      return accumulator
+                  },
+                  []
+                )
                 components.push(new Component()
                     .withDate(item.assets[0].lastModified)
                     .withId(item.id)
                     .withVersion(item.version)
                     .withPath(trimmedPath)
+                    .withAssetIDs(assetIDs)
                 )
                 if (!paths.includes(trimmedPath)) {
                     paths.push(trimmedPath)
@@ -247,25 +263,48 @@ export default class extends Command {
                 if (i <= keepItems) {
                     this.logger.info(`Keeping ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
                 } else {
-                    if (executeDelete) {
+                    if (executeDelete && !(component.path in keepComponentPaths)) {
                         this.logger.info(`Deleting ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
                         try {
                             let requestUrl = `${nexusUrl}/service/rest/v1/components/${component.id}`
                             this.logger.debug(`Calling ${requestUrl} with method DELETE`)
                             await axios.delete(
-                                requestUrl,
-                                {
-                                    auth: {
-                                        username: nexusUsername,
-                                        password: nexusPassword
-                                    }
-                                }
+                              requestUrl,
+                              {
+                                  auth: {
+                                      username: nexusUsername,
+                                      password: nexusPassword
+                                  }
+                              }
                             );
                         } catch (error) {
                             this.logger.error(error)
                         }
+                        for (let assetID in component.assetIDs) {
+                            this.logger.info(`Deleting component's asset with id ${assetID}`)
+                            try {
+                                let requestUrl = `${nexusUrl}/service/rest/v1/assets/${assetID}`
+                                this.logger.debug(`Calling ${requestUrl} with method DELETE`)
+                                await axios.delete(
+                                  requestUrl,
+                                  {
+                                      auth: {
+                                          username: nexusUsername,
+                                          password: nexusPassword
+                                      }
+                                  }
+                                );
+                            } catch (error) {
+                                this.logger.error(error)
+                            }
+                        }
+                    } else if (executeDelete) {
+                        this.logger.info(`Would delete, but keeping ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
                     } else {
                         this.logger.info(`Would delete ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
+                        for (let assetID in component.assetIDs) {
+                            this.logger.info(`Would delete component's asset with id ${assetID}`)
+                        }
                     }
                 }
                 i += 1
