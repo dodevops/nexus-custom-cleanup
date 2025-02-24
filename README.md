@@ -26,7 +26,7 @@ These are the variables to configure the application with:
 | PATH_DEPTH           | Path depth to do cleanup for                                                | yes      |               |
 | EXECUTE_DELETE       | If false, only print components to delete, instead of really deleting them  | no       | "false"       |
 | LOG_LEVEL            | Log level for logging                                                       | no       | "info"        |
-| KEEP_COMPONENT_PATHS | comma separated list of component paths to keep instead of deleting         | no       | []            |
+| KEEP_COMPONENT_PATHS | comma separated list of component path regexps to keep instead of deleting  | no       | []            |
 
 ### Docker
 

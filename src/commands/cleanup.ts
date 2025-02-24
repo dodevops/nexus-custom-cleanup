@@ -17,6 +17,8 @@ export default class extends Command {
      */
     private logger!: Logger
 
+    private keepComponentPaths: Array<RegExp> = []
+
     /**
      * Sets up logging
      * @param logLevel - Log level
@@ -61,8 +63,17 @@ export default class extends Command {
             PATH_DEPTH           - Path depth to do cleanup for\n\
             EXECUTE_DELETE       - (Optional) If false, only print components to delete, instead of really deleting them (default = false)\n\
             LOG_LEVEL            - (Optional)Log level for logging (default = info)\n\
-            KEEP_COMPONENT_PATHS - (Optional) comma separated list of component paths to keep instead of deleting\n'
+            KEEP_COMPONENT_PATHS - (Optional) comma separated list of component path regexps to keep instead of deleting\n'
         )
+    }
+
+    shouldPathBeKept(path: string): boolean {
+        for (const pathRegex of this.keepComponentPaths) {
+            if (pathRegex.test(path)) {
+                return false
+            }
+        }
+        return true
     }
 
     /**
@@ -164,7 +175,9 @@ export default class extends Command {
             executeDelete = (process.env.EXECUTE_DELETE === 'true')
         }
         if (process.env.KEEP_COMPONENT_PATHS) {
-            keepComponentPaths = process.env.KEEP_COMPONENT_PATHS.split(/,/)
+            for (const keepPath of process.env.KEEP_COMPONENT_PATHS.split(/,/)) {
+                this.keepComponentPaths.push(new RegExp(keepPath))
+            }
         }
 
         /**
@@ -263,24 +276,10 @@ export default class extends Command {
                 if (i <= keepItems) {
                     this.logger.info(`Keeping ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
                 } else {
-                    if (executeDelete && !(component.path in keepComponentPaths)) {
-                        this.logger.info(`Deleting ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
-                        try {
-                            let requestUrl = `${nexusUrl}/service/rest/v1/components/${component.id}`
-                            this.logger.debug(`Calling ${requestUrl} with method DELETE`)
-                            await axios.delete(
-                              requestUrl,
-                              {
-                                  auth: {
-                                      username: nexusUsername,
-                                      password: nexusPassword
-                                  }
-                              }
-                            );
-                        } catch (error) {
-                            this.logger.error(error)
-                        }
-                        for (let assetID in component.assetIDs) {
+                    if (!this.shouldPathBeKept(component.path)) {
+                        this.logger.info(`Skipping component with path ${component.path} because it matched an exclusion.`)
+                    } else if (executeDelete) {
+                        for (let assetID of component.assetIDs) {
                             this.logger.info(`Deleting component's asset with id ${assetID}`)
                             try {
                                 let requestUrl = `${nexusUrl}/service/rest/v1/assets/${assetID}`
@@ -297,6 +296,22 @@ export default class extends Command {
                             } catch (error) {
                                 this.logger.error(error)
                             }
+                        }
+                        this.logger.info(`Deleting ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
+                        try {
+                            let requestUrl = `${nexusUrl}/service/rest/v1/components/${component.id}`
+                            this.logger.debug(`Calling ${requestUrl} with method DELETE`)
+                            await axios.delete(
+                              requestUrl,
+                              {
+                                  auth: {
+                                      username: nexusUsername,
+                                      password: nexusPassword
+                                  }
+                              }
+                            );
+                        } catch (error) {
+                            this.logger.error(error)
                         }
                     } else if (executeDelete) {
                         this.logger.info(`Would delete, but keeping ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
