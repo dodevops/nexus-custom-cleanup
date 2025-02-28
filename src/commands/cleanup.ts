@@ -280,7 +280,7 @@ export default class extends Command {
                         this.logger.info(`Skipping component with path ${component.path} because it matched an exclusion.`)
                     } else if (executeDelete) {
                         for (let assetID of component.assetIDs) {
-                            this.logger.info(`Deleting component's asset with id ${assetID}`)
+                            this.logger.info(`Deleting asset ${assetID} of component ${component.version} with id ${component.id}`)
                             try {
                                 let requestUrl = `${nexusUrl}/service/rest/v1/assets/${assetID}`
                                 this.logger.debug(`Calling ${requestUrl} with method DELETE`)
@@ -296,22 +296,6 @@ export default class extends Command {
                             } catch (error) {
                                 this.logger.error(error)
                             }
-                        }
-                        this.logger.info(`Deleting ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
-                        try {
-                            let requestUrl = `${nexusUrl}/service/rest/v1/components/${component.id}`
-                            this.logger.debug(`Calling ${requestUrl} with method DELETE`)
-                            await axios.delete(
-                              requestUrl,
-                              {
-                                  auth: {
-                                      username: nexusUsername,
-                                      password: nexusPassword
-                                  }
-                              }
-                            );
-                        } catch (error) {
-                            this.logger.error(error)
                         }
                     } else if (executeDelete) {
                         this.logger.info(`Would delete, but keeping ${component.version} with id ${component.id} at ${component.path} with timestamp ${component.timestamp}`)
